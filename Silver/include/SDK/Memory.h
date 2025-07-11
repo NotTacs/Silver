@@ -39,13 +39,15 @@ namespace SDK
 		static void Free(void* Ptr)
 		{
 			if (Ptr) {
-				free(Ptr);
+				Realloc(Ptr, 0, 0);
 			}
 		}
 
-		static void* Realloc(void* Ptr, size_t Size, uint32 Alignment = 0)
+		static void* Realloc(void* Ptr, UINT64 Size, uint32 Alignment = 0)
 		{
-			return realloc(Ptr, Size);
+			static void* (*InternalRealloc)(void*, UINT64, uint32_t) = decltype(InternalRealloc)(Offsets::FMemory_Realloc);
+
+			return InternalRealloc(Ptr, Size, Alignment);
 		}
 
 		static size_t QuantizeSize(size_t Size, uint32_t Alignment = 16) {

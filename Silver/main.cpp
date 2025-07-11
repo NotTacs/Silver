@@ -8,42 +8,8 @@ SDK::FUObjectArray SDK::GUObjectArray = SDK::FUObjectArray();
 std::unique_ptr<MemoryLibrary> SDK::GMemLibrary = std::make_unique<MemoryLibrary>();
 uintptr_t Offsets::FName_ToString = 0;
 uintptr_t Offsets::GUObjectArray_ObjObjects = 0;
+uintptr_t Offsets::FMemory_Realloc = 0;
 
-
-void FString::AssignRange(const TCHAR* OtherData, int32 OtherLen)
-{
-	if (OtherLen == 0)
-	{
-		Empty();
-	}
-	else
-	{
-		const int32 ThisLen = Len();
-		if (OtherLen <= ThisLen)
-		{
-			// Unless the input is longer, this might be assigned from a view of itself.
-			TCHAR* DataPtr = Data.GetData();
-			FMemory::Memmove(DataPtr, OtherData, OtherLen * sizeof(TCHAR));
-			DataPtr[OtherLen] = TEXT('\0');
-			Data.RemoveAt(OtherLen + 1, ThisLen - OtherLen);
-		}
-		else
-		{
-			Data.Empty(OtherLen + 1);
-			Data.AddUninitialized(OtherLen + 1);
-			TCHAR* DataPtr = Data.GetData();
-			FMemory::Memcpy(DataPtr, OtherData, OtherLen * sizeof(TCHAR));
-			DataPtr[OtherLen] = TEXT('\0');
-		}
-	}
-}
-
-FString::FString(const ANSICHAR* Str) { ConstructFromCString(Data, Str); }
-FString::FString(const WIDECHAR* Str) { ConstructFromCString(Data, Str); }
-FString::FString(int32 Len, const ANSICHAR* Str) { ConstructWithLength(Data, Len, Str); }
-FString::FString(int32 Len, const WIDECHAR* Str) { ConstructWithLength(Data, Len, Str); }
-FString::FString(const ANSICHAR* Str, int32 ExtraSlack) { ConstructWithSlack(Data, Str, ExtraSlack); }
-FString::FString(const WIDECHAR* Str, int32 ExtraSlack) { ConstructWithSlack(Data, Str, ExtraSlack); }
 
 bool SDK::Init() {
 	AllocConsole();
@@ -83,6 +49,16 @@ bool SDK::Init() {
 	GUObjectArray = FUObjectArray(reinterpret_cast<void*>(Offsets::GUObjectArray_ObjObjects), 
 		bChunked);
 
+	/*
+	* -----------------------
+	* FMemory::Realloc Finder
+	* -----------------------
+	*/
+	GMemLibrary->FindStringRef(L"LogCountedInstances");
+	GMemLibrary->ScanFor({ 0xE8 });
+	Offsets::FMemory_Realloc = GMemLibrary->Get(1);
+
+
 	GMemLibrary->FindPattern("E8 ? ? ? ? 83 7C 24 ? ? 48 8D 3D ? ? ? ? 48 8B EF 48 8D 8E");
 	if (!GMemLibrary->IsValid()) {
 		GMemLibrary->FindStringRef(L"Material: '%s'");
@@ -98,7 +74,7 @@ bool SDK::Init() {
 
 	UE_LOG(LogMemory, Log, L"GObjectArrayNum: %d", GUObjectArray.GetObjectArrayNum());
 
-
+	static std::wofstream Stream("GObjectsDump.log");
 	for (int i = 0; i < GUObjectArray.GetObjectArrayNum(); i++)
 	{
 		FUObjectItem* Item = GUObjectArray.IndexToObject(i);
@@ -106,9 +82,9 @@ bool SDK::Init() {
 		SDK::UObjectBase* Object = Item->Object;
 		if (!Object)
 			continue;
-		UE_LOG(LogSDK, Log, L"Test: %s", *Object->GetFName().ToString());
-		break;
+		Stream << *Object->GetFName().ToString() << L"\n";
 	}
+	Stream.close();
 
 	return true;
 }
