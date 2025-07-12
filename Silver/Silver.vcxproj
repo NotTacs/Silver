@@ -150,6 +150,8 @@
     <ClInclude Include="include\SDK.h" />
     <ClInclude Include="include\SDK\AssertionMacros.h" />
     <ClInclude Include="include\SDK\Basic.h" />
+    <ClInclude Include="include\SDK\DefineMacros.h" />
+    <ClInclude Include="include\SDK\Engine_classes.h" />
     <ClInclude Include="include\SDK\external\memcury.h" />
     <ClInclude Include="include\SDK\GenericPlatformMath.h" />
     <ClInclude Include="include\SDK\LogCategory.h" />
@@ -159,7 +161,9 @@
     <ClInclude Include="include\SDK\MemoryLibrary.h" />
     <ClInclude Include="include\SDK\NumericLimits.h" />
     <ClInclude Include="include\SDK\Offsets.h" />
+    <ClInclude Include="include\SDK\PropertyFinder.h" />
     <ClInclude Include="include\SDK\UnrealContainers.h" />
+    <ClInclude Include="include\SDK\Version.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -171,9 +175,13 @@
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="source\Basic.cpp" />
+    <ClCompile Include="source\Engine_functions.cpp" />
+    <ClCompile Include="source\Engine_Generator.cpp" />
     <ClCompile Include="source\LogCategory.cpp" />
     <ClCompile Include="source\LogVerbosity.cpp" />
     <ClCompile Include="source\MemoryLibrary.cpp" />
+    <ClCompile Include="source\PropertyFinder.cpp" />
+    <ClCompile Include="source\Version.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

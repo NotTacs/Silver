@@ -97,5 +97,20 @@ namespace SDK
 		inline const TCHAR* operator*() {
 			return this->Data ? this->Data : L"";
 		}
+
+		void ParseIntoArray(std::vector<std::wstring>& OutArray, FString& Delimiter, bool bCullEmpty = true) {
+			size_t Start = 0;
+			size_t End;
+			const TCHAR* Source = this->operator*();
+			const TCHAR* Delim = *Delimiter;
+
+			std::wstringstream ss(Source);
+			std::wstring token;
+
+			while (std::getline(ss, token, *Delim))
+			{
+				OutArray.push_back(token);
+			}
+		}
 	};
 }

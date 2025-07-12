@@ -2,6 +2,7 @@
 
 namespace SDK
 {
+	class UClass* StaticClassImpl(const char* ClassName);
 
 	enum EObjectFlags
 	{
@@ -135,7 +136,8 @@ namespace SDK
 
 	class UObject : public UObjectBaseUtility
 	{
-		
+	public:
+		void ProcessEvent(class UFunction* Function, void* Parms) const;
 	};
 
 	struct FUObjectItem
@@ -600,5 +602,226 @@ namespace SDK
 			return ObjectItem;
 		}
 	};
+
+	/**
+ * Flags describing a class.
+ */
+	enum EClassFlags {
+		/** No Flags */
+		CLASS_None = 0x00000000u,
+		/** Class is abstract and can't be instantiated directly. */
+		CLASS_Abstract = 0x00000001u,
+		/** Save object configuration only to Default INIs, never to local INIs.
+		   Must be combined with CLASS_Config */
+		CLASS_DefaultConfig = 0x00000002u,
+		/** Load object configuration at construction time. */
+		CLASS_Config = 0x00000004u,
+		/** This object type can't be saved; null it out at save time. */
+		CLASS_Transient = 0x00000008u,
+		/** This object type may not be available in certain context. (i.e. game
+		   runtime or in certain configuration). Optional class data is saved
+		   separately to other object types. (i.e. might use sidecar files) */
+		CLASS_Optional = 0x00000010u,
+		/** */
+		CLASS_MatchedSerializers = 0x00000020u,
+		/** Indicates that the config settings for this class will be saved to
+		   Project/User*.ini (similar to CLASS_GlobalUserConfig) */
+		CLASS_ProjectUserConfig = 0x00000040u,
+		/** Class is a native class - native interfaces will have CLASS_Native
+		   set, but not RF_MarkAsNative */
+		CLASS_Native = 0x00000080u,
+		/** Don't export to C++ header. */
+		CLASS_NoExport = 0x00000100u,
+		/** Do not allow users to create in the editor. */
+		CLASS_NotPlaceable = 0x00000200u,
+		/** Handle object configuration on a per-object basis, rather than
+		   per-class. */
+		CLASS_PerObjectConfig = 0x00000400u,
+
+		/** Whether SetUpRuntimeReplicationData still needs to be called for
+		   this class */
+		CLASS_ReplicationDataIsSetUp = 0x00000800u,
+
+		/** Class can be constructed from editinline New button. */
+		CLASS_EditInlineNew = 0x00001000u,
+		/** Display properties in the editor without using categories. */
+		CLASS_CollapseCategories = 0x00002000u,
+		/** Class is an interface **/
+		CLASS_Interface = 0x00004000u,
+		/**  Do not export a constructor for this class, assuming it is in the
+		   cpptext **/
+		CLASS_CustomConstructor = 0x00008000u,
+		/** all properties and functions in this class are const and should be
+		   exported as const */
+		CLASS_Const = 0x00010000u,
+
+		/** Class flag indicating objects of this class need deferred dependency
+		   loading */
+		CLASS_NeedsDeferredDependencyLoading = 0x00020000u,
+
+		/** Indicates that the class was created from blueprint source material
+		 */
+		CLASS_CompiledFromBlueprint = 0x00040000u,
+
+		/** Indicates that only the bare minimum bits of this class should be
+		   DLL exported/imported */
+		CLASS_MinimalAPI = 0x00080000u,
+
+		/** Indicates this class must be DLL exported/imported (along with all
+		   of it's members) */
+		CLASS_RequiredAPI = 0x00100000u,
+
+		/** Indicates that references to this class default to instanced. Used
+		   to be subclasses of UComponent, but now can be any UObject */
+		CLASS_DefaultToInstanced = 0x00200000u,
+
+		/** Indicates that the parent token stream has been merged with ours. */
+		CLASS_TokenStreamAssembled = 0x00400000u,
+		/** Class has component properties. */
+		CLASS_HasInstancedReference = 0x00800000u,
+		/** Don't show this class in the editor class browser or edit inline new
+		   menus. */
+		CLASS_Hidden = 0x01000000u,
+		/** Don't save objects of this class when serializing */
+		CLASS_Deprecated = 0x02000000u,
+		/** Class not shown in editor drop down for class selection */
+		CLASS_HideDropDown = 0x04000000u,
+		/** Class settings are saved to <AppData>/..../Blah.ini (as opposed to
+		   CLASS_DefaultConfig) */
+		CLASS_GlobalUserConfig = 0x08000000u,
+		/** Class was declared directly in C++ and has no boilerplate generated
+		   by UnrealHeaderTool */
+		CLASS_Intrinsic = 0x10000000u,
+		/** Class has already been constructed (maybe in a previous DLL version
+		   before hot-reload). */
+		CLASS_Constructed = 0x20000000u,
+		/** Indicates that object configuration will not check against ini
+		   base/defaults when serialized */
+		CLASS_ConfigDoNotCheckDefaults = 0x40000000u,
+		/** Class has been consigned to oblivion as part of a blueprint
+		   recompile, and a newer version currently exists. */
+		CLASS_NewerVersionExists = 0x80000000u,
+	};
+
+	class UField : public UObject
+	{
+	public:
+		UField* Next;
+	};
+
+	class FFieldVariant
+	{
+		union FFieldObjectUnion {
+			class FField* Field;
+			UObject* Object;
+		} Container;
+
+		bool bIsUObject;
+	};
+
+	class FFieldClass
+	{
+	public:
+		FName Name;
+		uint64_t Id;
+		uint64_t CastFlags;
+		EClassFlags ClassFlags;
+		uint8_t Idk[0x4];
+		FFieldClass* SuperClass;
+	};
+
+	class FField
+	{
+	public:
+		void* VTable;
+		FFieldClass* ClassPrivate;
+		FFieldVariant Owner;
+		FField* Next;
+		FName NamePrivate;
+		EObjectFlags FlagsPrivate;
+	};
+
+	class FProperty : public FField
+	{
+	public:
+		int32_t ArrayDim;
+		int32_t ElementSize;
+		uint64_t PropertyFlags;
+		uint16_t Repindex;
+		uint8_t BlueprintReplicationCondition;
+		int32_t Offset_Internal;
+		FName RepNotifyFunc;
+		FProperty* PropertyLinkNext;
+		FProperty* NextRef;
+		FProperty* DestructorLinkNext;
+		FProperty* PostConstructLinkNext;
+	};
+
+	class UProperty : public UField
+	{
+	public:
+		int32_t ArrayDim;
+		int32_t ElementSize;
+		uint64 PropertyFlags;
+		uint16_t RepIndex;
+		uint8_t BlueprintReplicationCondition;
+		int32_t Offset_Internal;
+		FName RepNotifyFunc;
+		UProperty* PropertyLinkNext;
+		UProperty* NextRef;
+		UProperty* DestructorLinkNext;
+		UProperty* PostConstructorLinkNext;
+	};
+
+	class UStruct : public UField
+	{
+	private:
+		UStruct* SuperStruct() const;
+		UField* Children() const;
+		FField* ChildrenProperties() const;
+		int32 Size() const;
+		int32 MinAlignment() const;
+		TArray<uint8_t>& Script() const;
+		void* PropertyLink() const;
+		void* RefLink() const;
+		void* DestructorLink() const;
+		void* PostConstructorLink() const;
+
+	public:
+		UStruct* GetSuperStruct() const { return SuperStruct(); }
+		FField* GetChildrenProperties() const { return ChildrenProperties(); }
+		UField* GetChildren() const { return Children(); }
+		int32 GetSize() const { return Size(); }
+		void* GetPropLink() const { return PropertyLink(); }
+	};
+
+	class UClass : public UStruct
+	{
+	public:
+
+	};
+
+#define RESULT_PARAM Z_Param__Result
+#define RESULT_DECL void *const RESULT_PARAM
+	typedef void (*FNativeFuncPtr)(UObject* Context, void* TheStack,
+		RESULT_DECL);
+
+	class UFunction : public UStruct
+	{
+	private:
+		FNativeFuncPtr Func() const;
+	public:
+		FORCEINLINE FNativeFuncPtr GetNativeFunc() const { return Func(); }
+		void SetNativeFunc(FNativeFuncPtr InFunc);
+		inline uint32& FunctionFlags() {
+			static int FunctionFlagsOffset =
+				SDK::Offsets::Members::UFunction_Exec - 0x28;
+			return *reinterpret_cast<uint32*>(__int64(this) +
+				FunctionFlagsOffset);
+		}
+
+	};
+
+
 }
 

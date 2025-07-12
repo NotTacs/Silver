@@ -29,6 +29,10 @@
 #include "SDK/external/memcury.h"
 #include "SDK/MemoryLibrary.h"
 #include "SDK/Basic.h"
+#include "SDK/Version.h"
+#include "SDK/PropertyFinder.h"
+#include "SDK/DefineMacros.h"
+#include "SDK/Engine_classes.h"
 
 DEFINE_LOG_CATEGORY(LogSDK, Log)
 
@@ -37,6 +41,8 @@ namespace SDK
 	/*Global Memory Library*/
 	extern std::unique_ptr<MemoryLibrary> GMemLibrary;
 	extern FUObjectArray GUObjectArray;
+	extern FEngineVersion Engine_Version;
+	extern FFortniteVersion Fortnite_Version;
 
 
 	bool Init();
