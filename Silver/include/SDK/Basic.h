@@ -131,7 +131,40 @@ namespace SDK
 
 	class UObjectBaseUtility : public UObjectBase
 	{
+	private:
+		template <typename ClassType>
+		static FORCEINLINE bool
+			IsChildOfWorkaround(const ClassType* ObjClass,
+				const ClassType* TestCls) {
+			return ObjClass->IsChildOf(TestCls);
+		}
+	public:
+		template <typename OtherClassType>
+		FORCEINLINE bool IsA(OtherClassType SomeBase) const {
+			// We have a cyclic dependency between UObjectBaseUtility and
+			// UClass, so we use a template to allow inlining of something
+			// we haven't yet seen, because it delays compilation until the
+			// function is called.
 
+			// 'static_assert' that this thing is actually a UClass pointer
+			// or convertible to it.
+			const class UClass* SomeBaseClass = SomeBase;
+			(void)SomeBaseClass;
+			checkSlow(
+				SomeBaseClass,
+				"IsA(NULL) cannot yield meaningful results");
+
+			const class UClass* ThisClass = GetClass();
+
+			// Stop the compiler doing some unnecessary branching for
+			// nullptr checks
+			UE_ASSUME(SomeBaseClass);
+			UE_ASSUME(ThisClass);
+
+			return IsChildOfWorkaround(ThisClass, SomeBaseClass);
+		}
+
+		template <class T> bool IsA() const { return IsA(T::StaticClass()); }
 	};
 
 	class UObject : public UObjectBaseUtility
@@ -773,6 +806,40 @@ namespace SDK
 		UProperty* PostConstructorLinkNext;
 	};
 
+	class UBoolProperty : public UProperty
+	{
+	public:
+		/** Size of the bitfield/bool property. Equal to ElementSize but used to
+		 * check if the property has been properly initialized (0-8, where 0
+		 * means uninitialized). */
+		uint8 FieldSize;
+		/** Offset from the memeber variable to the byte of the property (0-7).
+		 */
+		uint8 ByteOffset;
+		/** Mask of the byte with the property value. */
+		uint8 ByteMask;
+		/** Mask of the field with the property value. Either equal to ByteMask
+		 * or 255 in case of 'bool' type. */
+		uint8 FieldMask;
+	};
+
+	class FBoolProperty : public FProperty
+	{
+	public:
+		/** Size of the bitfield/bool property. Equal to ElementSize but used to
+		 * check if the property has been properly initialized (0-8, where 0
+		 * means uninitialized). */
+		uint8 FieldSize;
+		/** Offset from the memeber variable to the byte of the property (0-7).
+		 */
+		uint8 ByteOffset;
+		/** Mask of the byte with the property value. */
+		uint8 ByteMask;
+		/** Mask of the field with the property value. Either equal to ByteMask
+		 * or 255 in case of 'bool' type. */
+		uint8 FieldMask;
+	};
+
 	class UStruct : public UField
 	{
 	private:
@@ -793,12 +860,23 @@ namespace SDK
 		UField* GetChildren() const { return Children(); }
 		int32 GetSize() const { return Size(); }
 		void* GetPropLink() const { return PropertyLink(); }
+
+	public:
+		template <class T> bool IsChildOf() const {
+			return IsChildOf(T::StaticClass());
+		}
+
+		bool IsChildOf(const UStruct* SomeBase) const;
 	};
 
 	class UClass : public UStruct
 	{
 	public:
+		UObject* GetDefaultObj();
 
+		bool IsA(const UClass* Parent) const {
+			return UObject::IsA(Parent);
+		}
 	};
 
 #define RESULT_PARAM Z_Param__Result
@@ -820,8 +898,13 @@ namespace SDK
 				FunctionFlagsOffset);
 		}
 
+		static UFunction* FromName(std::wstring FunctionName);
+
+	public:
+		static UClass* StaticClass()
+		{
+			return StaticClassImpl("Function");
+		}
 	};
-
-
 }
 

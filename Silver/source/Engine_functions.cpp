@@ -20,3 +20,17 @@ SDK::UEngine* SDK::UEngine::GetEngine() {
 
     return GEngine;
 }
+
+SDK::UWorld* SDK::UWorld::GetWorld()
+{
+    static UEngine* GEngine = nullptr;
+    if (!GEngine)
+        GEngine = UEngine::GetEngine();
+
+    if (UGameViewportClient* GameViewport = GEngine->GetGameViewport())
+    {
+        return GameViewport->GetWorld();
+    }
+
+    return nullptr;
+}

@@ -14,6 +14,18 @@ uint32_t Offsets::Members::UFunction_Exec = -1;
 FEngineVersion SDK::Engine_Version = FEngineVersion();
 FFortniteVersion SDK::Fortnite_Version = FFortniteVersion();
 
+uint32_t Offsets::Members::UStruct__SuperStruct = -1;
+uint32_t Offsets::Members::UStruct__Children = -1;
+uint32_t Offsets::Members::UStruct__ChildProperties = -1;
+uint32_t Offsets::Members::UStruct__Size = -1;
+uint32_t Offsets::Members::UStruct__MinAlignment = -1;
+uint32_t Offsets::Members::UStruct__Script = -1;
+uint32_t Offsets::Members::UStruct__PropertyLink = -1;
+uint32_t Offsets::Members::UStruct__RefLink = -1;
+uint32_t Offsets::Members::UStruct__DestructorLink = -1;
+uint32_t Offsets::Members::UStruct__PostConstructorLink = -1;
+uint32_t Offsets::Members::UStruct__ScriptAndPropertyObjectReferences = -1;
+
 
 bool SDK::Init() {
 	AllocConsole();
@@ -89,7 +101,7 @@ bool SDK::Init() {
 	Offsets::Members::UFunction_Exec = *Memcury::Scanner(GMemLibrary->Get()).AbsoluteOffset(2).GetAs<int*>();
 	UE_LOG(LogMemory, Log, L"UFunction::Exec: %d", Offsets::Members::UFunction_Exec);
 
-	UFunction* GetEngineVersionFN = (UFunction*)GUObjectArray.FindObject(L"GetEngineVersion");
+	UFunction* GetEngineVersionFN = UFunction::FromName(L"GetEngineVersion");
 	uint64_t NativeFuncAddress = uint64_t(GetEngineVersionFN->GetNativeFunc());
 	GMemLibrary->SetAddress(NativeFuncAddress);
 	GMemLibrary->ScanFor({ 0xE8 });

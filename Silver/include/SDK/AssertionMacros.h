@@ -41,3 +41,6 @@ namespace SDK
         ( ( expr ) ? static_cast<void>( 0 )                                    \
                    : SDK::CheckHandler( #expr, __FILE__, __LINE__,                  \
                                    std::format( message, __VA_ARGS__ ) ) )
+
+#define RESTRICT __restrict
+#define UE_ASSUME( x ) __assume( x )

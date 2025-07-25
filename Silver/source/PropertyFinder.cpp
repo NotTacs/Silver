@@ -8,7 +8,7 @@ SDK::PropertyInfo SDK::PropertyFinder::FindPropertyByName(const std::string& Cla
 	Info.Offset = -1;
 
 	std::wstring ClassNameWStr = std::wstring(ClassName.begin(), ClassName.end());
-	static UClass* StaticClass = static_cast<UClass*>(SDK::GUObjectArray.FindObject(ClassNameWStr));
+	UClass* StaticClass = static_cast<UClass*>(SDK::GUObjectArray.FindObject(ClassNameWStr));
 	void* ret = nullptr;
 
 	bool bSupportsFProperty = SDK::Engine_Version >= FEngineVersion(4, 25, 0);
@@ -70,6 +70,6 @@ SDK::PropertyInfo SDK::PropertyFinder::FindPropertyByName(const std::string& Cla
 	}
 
 	Info.Prop = ret;
-	Info.Offset = bUseChildProperties || bSupportsFProperty ? ((FProperty*)ret)->Offset_Internal : ((UProperty*)ret)->Offset_Internal;
+	Info.Offset = ret ? bUseChildProperties || bSupportsFProperty ? ((FProperty*)ret)->Offset_Internal : ((UProperty*)ret)->Offset_Internal : 0;
 	return Info;
 }

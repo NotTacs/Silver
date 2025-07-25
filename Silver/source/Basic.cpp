@@ -58,3 +58,31 @@ void SDK::UObject::ProcessEvent(UFunction* Function, void* Parms) const {
         void* Params) = decltype(ProcessEvent)(Offsets::UObject_ProcessEvent);
     return ProcessEvent(this, Function, Parms);
 }
+
+SDK::UObject* SDK::UClass::GetDefaultObj()
+{
+    return SDK::GUObjectArray.FindObject(std::wstring(L"Default__") + *this->GetFName().ToString());
+}
+
+SDK::UFunction* SDK::UFunction::FromName(std::wstring FunctionName)
+{
+    return reinterpret_cast<UFunction*>(SDK::GUObjectArray.FindObject(FunctionName));
+}
+
+bool SDK::UStruct::IsChildOf(const UStruct* SomeBase) const
+{
+    if (SomeBase == nullptr) {
+        return false;
+    }
+
+    bool bOldResult = false;
+    for (const UStruct* TempStruct = this; TempStruct;
+        TempStruct = TempStruct->GetSuperStruct()) {
+        if (TempStruct == SomeBase) {
+            bOldResult = true;
+            break;
+        }
+    }
+
+    return bOldResult;
+}
